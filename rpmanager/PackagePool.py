@@ -11,7 +11,7 @@ import commands
 try:
     from backports import lzma
 except ImportError:
-    import lzma
+    from lzma import LZMAFile as lzma
 
 import singletons
 from common import *
@@ -136,8 +136,8 @@ class PackagePool:
         """Get the list of every packages that are installable on the system."""
         for source in self.GetActiveSources():
             #disable gzip file = gzip.open(source.hdlist)
-            print "DEBUG " + lzma.open(source.hdlist).read()
-            file = lzma.open(source.hdlist)
+#            print "DEBUG " + lzma.open(source.hdlist).read()
+            file = lzma(source.hdlist)
             for line in file:
                 if line[:6] != '@info@':
                     continue
@@ -148,7 +148,7 @@ class PackagePool:
                 self.AddPackage(longname, size, category, source)
 
     def RegisterUpgradablePackages(self):
-        upl  = commands.getoutput('urpmq --auto-select -r').split()
+        upl  = commands.getoutput('urpmq --auto-select --whatrequires').split()
         l = len (upl)
         i = 0
         self.upgradable_packages = []
@@ -160,17 +160,13 @@ class PackagePool:
 
     def generate_shortname(self, longname):
         """Generate shortname from a longname. This is a workaround if association failed."""
-        i = 0
-        l = len(longname) -1
-        while True:
-          a = longname[l]
-          if a == '-':
-            i += 1
-          if i == 2:
-            break
-          l -= 1
-        shortname = longname[:l]
-        return shortname
+        print("LONGN:", longname)
+        pos1 = longname.rfind("-")
+        if pos1 > 0:
+            pos2 = longname[:pos1].rfind("-")
+            return longname[:pos2]
+        else:
+            return ""
     
     def RegisterCategory(self, category_str, package):
         """Register category 'category' in the category tree."""
@@ -217,7 +213,7 @@ class PackagePool:
         for source in active_sources:
             file = lzma.open(source.hdlist)
             for line in file:
-                if line[:9] == '@summary@':
+                if line[:6] == '@summary@':
                     fields = line.strip().split('@')
                     description = fields[2]
                 elif line[:6] == '@info@':
