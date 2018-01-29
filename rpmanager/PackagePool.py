@@ -213,7 +213,7 @@ class PackagePool:
         for source in active_sources:
             file = lzma.open(source.hdlist)
             for line in file:
-                if line[:6] == '@summary@':
+                if line[:9] == '@summary@':
                     fields = line.strip().split('@')
                     description = fields[2]
                 elif line[:6] == '@info@':
